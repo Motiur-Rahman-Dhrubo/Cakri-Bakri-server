@@ -24,6 +24,9 @@ async function run() {
   try {
     const userCollection = client.db("chakriDB").collection("users");
     const jobsCollection = client.db("cakriBakriDB").collection("jobs");
+    const applicationCollection = client
+      .db("cakriBakriDB")
+      .collection("applications");
 
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
@@ -59,7 +62,13 @@ async function run() {
       const result = await jobsCollection.findOne(query);
       res.send(result);
     });
-    
+
+    // save job application
+    app.post("/apply-job", async (req, res) => {
+      const application = req.body;
+      const result = await applicationCollection.insertOne(application);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
