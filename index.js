@@ -5,7 +5,9 @@ const app = express();
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5173"
+}));
 app.use(express.json());
 
 // MongoDB Setup
@@ -22,11 +24,12 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    const userCollection = client.db("chakriDB").collection("users");
-    const jobCollection = client.db("chakriDB").collection("jobs");
+    const userCollection = client.db("cakriBakriDB").collection("users");
+    const jobsCollection = client.db("cakriBakriDB").collection("jobs");
 
-    // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
+   
+
+    // --------------------------user related APIs----------------------------------------------------------
 
     app.get("/users", async (req, res) => {
       console.log(req.headers);
@@ -46,18 +49,39 @@ async function run() {
       res.send(result);
     });
 
-    app.post('/post-job', async(req, res) =>{
-      const jobData = req.body;
 
-      const result = await jobCollection.insertOne(jobData);
+     // --------------------------job related APIs----------------------------------------------------------
+    // get all jobs
+    app.get("/jobs", async (req, res) => {
+      const result = await jobsCollection.find().toArray();
+      res.send(result);
+    });
+
+    // post a job in db
+    app.post('/add-job', async(req, res) =>{
+      const jobData = req.body;
+      const result = await jobsCollection.insertOne(jobData);
       res.send(result);
     })
 
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // get specific job
+    app.get("/job-details/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await jobsCollection.findOne(query);
+      res.send(result);
+    });
+
+    // get specific job
+    app.delete("/delete-job/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await jobsCollection.deleteOne(query);
+      res.send(result);
+    });
+    
+
+    
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
