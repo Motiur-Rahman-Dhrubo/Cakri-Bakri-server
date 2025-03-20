@@ -23,6 +23,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     const userCollection = client.db("chakriDB").collection("users");
+    const jobCollection = client.db("chakriDB").collection("jobs");
 
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
@@ -44,6 +45,13 @@ async function run() {
       const result = await userCollection.insertOne(user);
       res.send(result);
     });
+
+    app.post('/post-job', async(req, res) =>{
+      const jobData = req.body;
+
+      const result = await jobCollection.insertOne(jobData);
+      res.send(result);
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
