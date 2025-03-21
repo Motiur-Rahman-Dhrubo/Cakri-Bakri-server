@@ -104,6 +104,19 @@ async function run() {
       const result = await applicationCollection.insertOne(application);
       res.send(result);
     });
+    
+    // ! Applied jobs get operation
+
+    app.get("/applied-jobs", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      // if (req.user?.email !== email) {
+      //   return res.status(403).send({ message: "forbidden access" });
+      // }
+      const result = await applicationCollection.find(query).toArray();
+      res.send(result);
+    });
+    
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
