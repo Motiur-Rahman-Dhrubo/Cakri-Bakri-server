@@ -32,9 +32,7 @@ async function run() {
   try {
     const userCollection = client.db("cakriBakriDB").collection("users");
     const jobsCollection = client.db("cakriBakriDB").collection("jobs");
-    const applicationCollection = client
-      .db("cakriBakriDB")
-      .collection("applications");
+    const applicationCollection = client.db("cakriBakriDB").collection("applications");
 
     // Auth related APIs
     app.post("/jwt", async (req, res) => {
