@@ -35,6 +35,9 @@ async function run() {
     const applicationCollection = client
       .db("cakriBakriDB")
       .collection("applications");
+    const favoriteJobsCollection = client
+      .db("cakriBakriDB")
+      .collection("favoriteJobs");
 
     // Auth related APIs
     app.post("/jwt", async (req, res) => {
@@ -118,7 +121,27 @@ async function run() {
       const result = await applicationCollection.find(query).toArray();
       res.send(result);
     });
-    
+
+    // ! Favorite jobs post operation
+
+    app.post("/favorite-jobs", async (req, res) => {
+      const favoriteJobs = req.body;
+      // console.log(favoriteJobs)
+      // if (req.body?.jobId == ) {
+      //   return res.status(403).send({ message: "forbidden access" });
+      // }
+      const result = await favoriteJobsCollection.insertOne(favoriteJobs);
+      res.send(result);
+    });
+
+    // ! Favorite jobs get operation
+
+    app.get("/favorite-jobs", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const result = await favoriteJobsCollection.find(query).toArray();
+      res.send(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
