@@ -32,12 +32,8 @@ async function run() {
   try {
     const userCollection = client.db("cakriBakriDB").collection("users");
     const jobsCollection = client.db("cakriBakriDB").collection("jobs");
-    const applicationCollection = client
-      .db("cakriBakriDB")
-      .collection("applications");
-    const favoriteJobsCollection = client
-      .db("cakriBakriDB")
-      .collection("favoriteJobs");
+    const applicationCollection = client.db("cakriBakriDB").collection("applications");
+    const favoriteJobsCollection = client.db("cakriBakriDB").collection("favoriteJobs");
 
     // Auth related APIs
     app.post("/jwt", async (req, res) => {
