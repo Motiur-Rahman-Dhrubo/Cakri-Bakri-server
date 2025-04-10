@@ -181,6 +181,19 @@ app.get('/user/seeker/:email', verifyToken, async (req, res) => {
       res.send(result);
     });
 
+    // get specified job update
+    app.put("/update-job/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+          $set: {
+              ...req.body // Spread the request body to update specific fields
+          }
+      };
+      const result = await jobsCollection.updateOne(query, updateDoc);
+      res.send(result);
+  });
+
     // ! Favorite jobs post operation
 
     app.post("/favorite-jobs", async (req, res) => {
