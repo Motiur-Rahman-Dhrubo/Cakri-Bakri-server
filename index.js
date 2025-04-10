@@ -32,6 +32,9 @@ async function run() {
   try {
     const userCollection = client.db("cakriBakriDB").collection("users");
     const jobsCollection = client.db("cakriBakriDB").collection("jobs");
+    const applicationCollection = client
+      .db("cakriBakriDB")
+      .collection("applications");
     const applicationCollection = client.db("cakriBakriDB").collection("applications");
     const favoriteJobsCollection = client.db("cakriBakriDB").collection("favoriteJobs");
 
@@ -154,21 +157,14 @@ app.get('/user/seeker/:email', verifyToken, async (req, res) => {
       res.send(result);
     });
 
-    // get specific job
-    app.delete("/delete-job/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const result = await jobsCollection.deleteOne(query);
-      res.send(result);
-    });
-
-    // apply a job
+    // save job application
     app.post("/apply-job", async (req, res) => {
       const application = req.body;
       const result = await applicationCollection.insertOne(application);
       res.send(result);
     });
 
+<<<<<<< HEAD
     // ! Applied jobs get operatio
 
     app.get("/applied-jobs", async (req, res) => {
@@ -214,6 +210,13 @@ app.get('/user/seeker/:email', verifyToken, async (req, res) => {
       const result = await favoriteJobsCollection.find(query).toArray();
       res.send(result);
     });
+=======
+    // Send a ping to confirm a successful connection
+    await client.db("admin").command({ ping: 1 });
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
+>>>>>>> abuBakrSiddik
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
