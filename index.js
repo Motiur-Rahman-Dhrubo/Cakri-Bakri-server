@@ -52,6 +52,67 @@ async function run() {
         })
         .send({ success: true });
     });
+    const verifyToken = (req, res, next) => {
+      if (!req.headers.authorization) {
+          return res.status(401).send({ message: ' Unauthorized access' })
+      }
+      const token = req.headers.authorization.split(' ')[1]
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+          if (err) {
+              return res.status(400).send({ message: ' Unauthorized access' })
+          }
+          req.decoded = decoded;
+          next()
+      })
+  }
+
+    app.get('/user/admin/:email', verifyToken, async (req, res) => {
+      const email = req.params.email
+
+      if (email !== req.decoded.email) {
+          return res.status(403).send({ message: 'Forbidden access' })
+      }
+      const query = { email: email }
+      const user = await userCollection.findOne(query)
+      let admin = false
+      if (user) {
+          admin = user?.role === 'admin'
+      }
+      console.log(admin)
+      res.send({ admin })
+
+  })
+  app.get('/user/publisher/:email',verifyToken, async (req, res) => {
+    const email = req.params.email
+    if (email !== req.decoded.email) {
+        return res.status(403).send({ message: 'Forbidden access' })
+    }
+    const query = { email: email }
+    const user = await userCollection.findOne(query)
+    let publisher = false
+    if (user) {
+        publisher = user?.role === 'publisher'
+    }
+    console.log(publisher)
+    res.send({ publisher })
+
+})
+app.get('/user/seeker/:email', verifyToken, async (req, res) => {
+    const email = req.params.email
+    if (email !== req.decoded.email) {
+        return res.status(403).send({ message: 'Forbidden access' })
+    }
+    const query = { email: email }
+    const user = await userCollection.findOne(query)
+    let seeker = false
+    if (user) {
+        seeker = user?.role === 'seeker'
+    }
+    console.log(seeker)
+    res.send({ seeker })
+
+}) 
+
 
     // --------------------------user related APIs----------------------------------------------------------
 
@@ -69,7 +130,14 @@ async function run() {
       if (existingUser) {
         return res.send({ messege: "User Already Exists", insertedId: null });
       }
-      const result = await userCollection.insertOne(user);
+      const newUser ={
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        photoURL: user.photoURL
+      }
+      const result = await userCollection.insertOne(newUser);
+     console.log(result)
       res.send(result);
     });
 
@@ -110,7 +178,7 @@ async function run() {
       res.send(result);
     });
 
-    // ! Applied jobs get operation
+    // ! Applied jobs get operatio
 
     app.get("/applied-jobs", async (req, res) => {
       const email = req.query.email;
