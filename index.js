@@ -164,7 +164,6 @@ app.get('/user/seeker/:email', verifyToken, async (req, res) => {
       res.send(result);
     });
 
-<<<<<<< HEAD
     // ! Applied jobs get operatio
 
     app.get("/applied-jobs", async (req, res) => {
@@ -210,13 +209,11 @@ app.get('/user/seeker/:email', verifyToken, async (req, res) => {
       const result = await favoriteJobsCollection.find(query).toArray();
       res.send(result);
     });
-=======
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
->>>>>>> abuBakrSiddik
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
