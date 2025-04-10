@@ -35,8 +35,9 @@ async function run() {
     const applicationCollection = client
       .db("cakriBakriDB")
       .collection("applications");
-    const applicationCollection = client.db("cakriBakriDB").collection("applications");
-    const favoriteJobsCollection = client.db("cakriBakriDB").collection("favoriteJobs");
+    const favoriteJobsCollection = client
+      .db("cakriBakriDB")
+      .collection("favoriteJobs");
 
     // Auth related APIs
     app.post("/jwt", async (req, res) => {
@@ -48,65 +49,61 @@ async function run() {
     });
     const verifyToken = (req, res, next) => {
       if (!req.headers.authorization) {
-          return res.status(401).send({ message: ' Unauthorized access' })
+        return res.status(401).send({ message: " Unauthorized access" });
       }
-      const token = req.headers.authorization.split(' ')[1]
+      const token = req.headers.authorization.split(" ")[1];
       jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-          if (err) {
-              return res.status(400).send({ message: ' Unauthorized access' })
-          }
-          req.decoded = decoded;
-          next()
-      })
-  }
+        if (err) {
+          return res.status(400).send({ message: " Unauthorized access" });
+        }
+        req.decoded = decoded;
+        next();
+      });
+    };
 
-    app.get('/user/admin/:email', verifyToken, async (req, res) => {
-      const email = req.params.email
+    app.get("/user/admin/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
 
       if (email !== req.decoded.email) {
-          return res.status(403).send({ message: 'Forbidden access' })
+        return res.status(403).send({ message: "Forbidden access" });
       }
-      const query = { email: email }
-      const user = await userCollection.findOne(query)
-      let admin = false
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      let admin = false;
       if (user) {
-          admin = user?.role === 'admin'
+        admin = user?.role === "admin";
       }
-      console.log(admin)
-      res.send({ admin })
-
-  })
-  app.get('/user/publisher/:email',verifyToken, async (req, res) => {
-    const email = req.params.email
-    if (email !== req.decoded.email) {
-        return res.status(403).send({ message: 'Forbidden access' })
-    }
-    const query = { email: email }
-    const user = await userCollection.findOne(query)
-    let publisher = false
-    if (user) {
-        publisher = user?.role === 'publisher'
-    }
-    console.log(publisher)
-    res.send({ publisher })
-
-})
-app.get('/user/seeker/:email', verifyToken, async (req, res) => {
-    const email = req.params.email
-    if (email !== req.decoded.email) {
-        return res.status(403).send({ message: 'Forbidden access' })
-    }
-    const query = { email: email }
-    const user = await userCollection.findOne(query)
-    let seeker = false
-    if (user) {
-        seeker = user?.role === 'seeker'
-    }
-    console.log(seeker)
-    res.send({ seeker })
-
-}) 
-
+      console.log(admin);
+      res.send({ admin });
+    });
+    app.get("/user/publisher/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      if (email !== req.decoded.email) {
+        return res.status(403).send({ message: "Forbidden access" });
+      }
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      let publisher = false;
+      if (user) {
+        publisher = user?.role === "publisher";
+      }
+      console.log(publisher);
+      res.send({ publisher });
+    });
+    app.get("/user/seeker/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      if (email !== req.decoded.email) {
+        return res.status(403).send({ message: "Forbidden access" });
+      }
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      let seeker = false;
+      if (user) {
+        seeker = user?.role === "seeker";
+      }
+      console.log(seeker);
+      res.send({ seeker });
+    });
 
     // --------------------------user related APIs----------------------------------------------------------
 
@@ -124,14 +121,14 @@ app.get('/user/seeker/:email', verifyToken, async (req, res) => {
       if (existingUser) {
         return res.send({ messege: "User Already Exists", insertedId: null });
       }
-      const newUser ={
+      const newUser = {
         name: user.name,
         email: user.email,
         role: user.role,
-        photoURL: user.photoURL
-      }
+        photoURL: user.photoURL,
+      };
       const result = await userCollection.insertOne(newUser);
-     console.log(result)
+      console.log(result);
       res.send(result);
     });
 
@@ -157,18 +154,53 @@ app.get('/user/seeker/:email', verifyToken, async (req, res) => {
       res.send(result);
     });
 
-    // save job application
+    // get specific job
+    app.delete("/delete-job/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await jobsCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // apply a job
     app.post("/apply-job", async (req, res) => {
       const application = req.body;
       const result = await applicationCollection.insertOne(application);
       res.send(result);
     });
 
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // ! Applied jobs get operatio
+
+    app.get("/applied-jobs", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      // if (req.user?.email !== email) {
+      //   return res.status(403).send({ message: "forbidden access" });
+      // }
+      const result = await applicationCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // ! Favorite jobs post operation
+
+    app.post("/favorite-jobs", async (req, res) => {
+      const favoriteJobs = req.body;
+      // console.log(favoriteJobs)
+      // if (req.body?.jobId == ) {
+      //   return res.status(403).send({ message: "forbidden access" });
+      // }
+      const result = await favoriteJobsCollection.insertOne(favoriteJobs);
+      res.send(result);
+    });
+
+    // ! Favorite jobs get operation
+
+    app.get("/favorite-jobs", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const result = await favoriteJobsCollection.find(query).toArray();
+      res.send(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
