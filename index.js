@@ -8,10 +8,7 @@ require("dotenv").config();
 const port = process.env.PORT || 5000;
 
 app.use(
-  cors({
-    origin: "http://localhost:5173",
-    credentials: true,
-  })
+  cors()
 );
 app.use(express.json());
 app.use(cookieParser());
@@ -146,6 +143,19 @@ async function run() {
       res.send(result);
     });
 
+
+    //get catagorised jobs for client side
+    app.get("/jobs-category", async(req, res) =>{
+      const {category} = req.query;
+      const query = {category}
+
+      const result = await jobsCollection.find(query).toArray();
+      if(result.length === 0){
+        return res.send({message: `No jobs find with "${category}" category.`})
+      }
+      res.send(result);
+    })
+
     // get specific job
     app.get("/job-details/:id", async (req, res) => {
       const id = req.params.id;
@@ -178,6 +188,11 @@ async function run() {
     // apply a job
     app.post("/apply-job", async (req, res) => {
       const application = req.body;
+      const query = {email: application?.email, jobId: application?.jobId}
+      const alreadyApplied = await applicationCollection.findOne(query);
+      if(alreadyApplied){
+        return res.send({message: "Already applied for the job."})
+      }
       const result = await applicationCollection.insertOne(application);
       res.send(result);
     });
@@ -198,10 +213,11 @@ async function run() {
 
     app.post("/favorite-jobs", async (req, res) => {
       const favoriteJobs = req.body;
-      // console.log(favoriteJobs)
-      // if (req.body?.jobId == ) {
-      //   return res.status(403).send({ message: "forbidden access" });
-      // }
+      const query = {email: favoriteJobs?.email, jobId: favoriteJobs?.jobId}
+      const alreadyApplied = await favoriteJobsCollection.findOne(query);
+      if(alreadyApplied){
+        return res.send({message: "Already added in the favourite job list."})
+      }
       const result = await favoriteJobsCollection.insertOne(favoriteJobs);
       res.send(result);
     });
