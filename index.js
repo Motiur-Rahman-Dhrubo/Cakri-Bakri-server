@@ -8,10 +8,7 @@ require("dotenv").config();
 const port = process.env.PORT || 5000;
 
 app.use(
-  cors({
-    origin: "http://localhost:5173",
-    credentials: true,
-  })
+  cors()
 );
 app.use(express.json());
 app.use(cookieParser());
@@ -145,6 +142,19 @@ async function run() {
       const result = await jobsCollection.insertOne(jobData);
       res.send(result);
     });
+
+
+    //get catagorised jobs for client side
+    app.get("/jobs-category", async(req, res) =>{
+      const {category} = req.query;
+      const query = {category}
+
+      const result = await jobsCollection.find(query).toArray();
+      if(result.length === 0){
+        return res.send({message: `No jobs find with "${category}" category.`})
+      }
+      res.send(result);
+    })
 
     // get specific job
     app.get("/job-details/:id", async (req, res) => {
