@@ -2,16 +2,31 @@ const express = require("express");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
+const nodemailer = require("nodemailer");
+const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 
 app.use(
-  cors()
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
 );
 app.use(express.json());
+app.use(bodyParser.json());
 app.use(cookieParser());
+
+// create nodemailer transporter
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.NODEMAILER_EMAIL,
+    pass: process.env.NODEMAILER_PASS,
+  },
+});
 
 // MongoDB Setup
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.lfjkv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -143,19 +158,6 @@ async function run() {
       res.send(result);
     });
 
-
-    //get catagorised jobs for client side
-    app.get("/jobs-category", async(req, res) =>{
-      const {category} = req.query;
-      const query = {category}
-
-      const result = await jobsCollection.find(query).toArray();
-      if(result.length === 0){
-        return res.send({message: `No jobs find with "${category}" category.`})
-      }
-      res.send(result);
-    })
-
     // get specific job
     app.get("/job-details/:id", async (req, res) => {
       const id = req.params.id;
@@ -188,11 +190,6 @@ async function run() {
     // apply a job
     app.post("/apply-job", async (req, res) => {
       const application = req.body;
-      const query = {email: application?.email, jobId: application?.jobId}
-      const alreadyApplied = await applicationCollection.findOne(query);
-      if(alreadyApplied){
-        return res.send({message: "Already applied for the job."})
-      }
       const result = await applicationCollection.insertOne(application);
       res.send(result);
     });
@@ -213,11 +210,10 @@ async function run() {
 
     app.post("/favorite-jobs", async (req, res) => {
       const favoriteJobs = req.body;
-      const query = {email: favoriteJobs?.email, jobId: favoriteJobs?.jobId}
-      const alreadyApplied = await favoriteJobsCollection.findOne(query);
-      if(alreadyApplied){
-        return res.send({message: "Already added in the favourite job list."})
-      }
+      // console.log(favoriteJobs)
+      // if (req.body?.jobId == ) {
+      //   return res.status(403).send({ message: "forbidden access" });
+      // }
       const result = await favoriteJobsCollection.insertOne(favoriteJobs);
       res.send(result);
     });
@@ -229,6 +225,31 @@ async function run() {
       const query = { email: email };
       const result = await favoriteJobsCollection.find(query).toArray();
       res.send(result);
+    });
+
+    // ! create nodemailer api for email sending to posting a job for job seeker
+    app.post("/send-email", async (req, res) => {
+      const totalSeeker = await userCollection
+        .find({ role: "seeker" }, { projection: { email: 1, _id: 0 } })
+        .toArray();
+      const recipientsEmail = totalSeeker.map((doc) => doc.email);
+      const { subject, message } = req.body;
+
+      try {
+        // mail options
+        const mailOptions = {
+          from: process.env.NODEMAILER_EMAIL,
+          bcc: recipientsEmail.join(","),
+          subject,
+          html: message,
+        };
+        await transporter.sendMail(mailOptions);
+        res
+          .status(200)
+          .json({ success: true, message: "Email sent successfully" });
+      } catch (error) {
+        console.log(error);
+      }
     });
   } finally {
     // Ensures that the client will close when you finish/error
