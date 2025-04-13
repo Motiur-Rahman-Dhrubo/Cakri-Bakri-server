@@ -130,9 +130,28 @@ async function run() {
     });
 
     // --------------------------job related APIs----------------------------------------------------------
-    // get all jobs
+    // get all jobs for client all jobs page
     app.get("/jobs", async (req, res) => {
-      const result = await jobsCollection.find().toArray();
+      const { search, category } = req.query;
+      let query = {};
+      if (search) {
+        query.title = { $regex: new RegExp(search, 'i') };
+      }
+      if (category) {
+        query.category = category;
+      }
+      const result = await jobsCollection.find(query).toArray();
+      if (result.length === 0) {
+        let message = "No jobs found";
+        if (search && category) {
+          message = `No jobs found with "${search}" job title and "${category}" job category.`;
+        } else if (search) {
+          message = `No jobs found with "${search}" job title.`;
+        } else if (category) {
+          message = `No jobs found with "${category}" job category.`;
+        }
+        return res.send({ message });
+      }
       res.send(result);
     });
 
@@ -145,13 +164,13 @@ async function run() {
 
 
     //get catagorised jobs for client side
-    app.get("/jobs-category", async(req, res) =>{
-      const {category} = req.query;
-      const query = {category}
+    app.get("/jobs-category", async (req, res) => {
+      const { category } = req.query;
+      const query = { category }
 
       const result = await jobsCollection.find(query).toArray();
-      if(result.length === 0){
-        return res.send({message: `No jobs find with "${category}" category.`})
+      if (result.length === 0) {
+        return res.send({ message: `No jobs find with "${category}" category.` })
       }
       res.send(result);
     })
@@ -188,10 +207,10 @@ async function run() {
     // apply a job
     app.post("/apply-job", async (req, res) => {
       const application = req.body;
-      const query = {email: application?.email, jobId: application?.jobId}
+      const query = { email: application?.email, jobId: application?.jobId }
       const alreadyApplied = await applicationCollection.findOne(query);
-      if(alreadyApplied){
-        return res.send({message: "Already applied for the job."})
+      if (alreadyApplied) {
+        return res.send({ message: "Already applied for the job." })
       }
       const result = await applicationCollection.insertOne(application);
       res.send(result);
@@ -213,10 +232,10 @@ async function run() {
 
     app.post("/favorite-jobs", async (req, res) => {
       const favoriteJobs = req.body;
-      const query = {email: favoriteJobs?.email, jobId: favoriteJobs?.jobId}
+      const query = { email: favoriteJobs?.email, jobId: favoriteJobs?.jobId }
       const alreadyApplied = await favoriteJobsCollection.findOne(query);
-      if(alreadyApplied){
-        return res.send({message: "Already added in the favourite job list."})
+      if (alreadyApplied) {
+        return res.send({ message: "Already added in the favourite job list." })
       }
       const result = await favoriteJobsCollection.insertOne(favoriteJobs);
       res.send(result);
