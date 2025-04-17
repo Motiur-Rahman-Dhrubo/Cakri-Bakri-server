@@ -8,6 +8,12 @@ const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
+const { createServer } = require('node:http');
+const { join } = require('node:path');
+const { Server } = require('socket.io');
+const server = createServer(app);
+const io = new Server(server);
+
 
 app.use(
   cors({
@@ -18,6 +24,8 @@ app.use(
 app.use(express.json());
 app.use(bodyParser.json());
 app.use(cookieParser());
+
+// let messagesCollection;
 
 // create nodemailer transporter
 const transporter = nodemailer.createTransport({
@@ -32,13 +40,14 @@ const transporter = nodemailer.createTransport({
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.lfjkv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
+const  client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
   },
 });
+
 
 async function run() {
   try {
@@ -50,6 +59,55 @@ async function run() {
     const favoriteJobsCollection = client
       .db("cakriBakriDB")
       .collection("favoriteJobs");
+    const messagesCollection = client.db("cakriBakriDB").collection("messages");
+    
+
+
+    // await client.connect();
+    // const db = client.db("cakriBakriDB");
+    // messagesCollection = db.collection("messages");
+
+       //! Socket.IO chat setup
+
+       io.on("connection", (socket) => {
+        console.log("New user connected");
+  
+        socket.on("sendMessages", async(data) => {
+          const message = {
+            text: data?.text,
+            applierEmail: data?.jobApplierEmail,
+            senderEmail: data?.messageSender,
+            sender: data?.sender,
+            createdAt: new Date(),
+          };
+          console.log(message);
+          await messagesCollection.insertOne(message);
+          
+            io.emit(`${message.applierEmail}`, message);
+          
+          // io.emit(`${message.sender}`, message);
+          // io.emit('receivedMessage',message)
+        });
+  
+        socket.on("disconnect", () => {
+          console.log("Client disconnected");
+        });
+      });
+
+  // messages get operation 
+
+      app.get("/messages", async (req, res) => {
+        try {
+          const {applierEmail} = req.query
+          const query= {
+            ...(applierEmail && { applierEmail})
+          }
+          const messages = await messagesCollection.find(query).sort({ createdAt: 1 }).toArray();
+        res.json(messages);
+        } catch (error) {
+          res.status(500).json({ error: "Failed to fetch messages" });
+        }
+      });
 
     // Auth related APIs
     app.post("/jwt", async (req, res) => {
@@ -73,6 +131,13 @@ async function run() {
       });
     };
 
+  // !scoket io
+
+  // app.get('/', (req, res) => {
+  //   res.sendFile(join(__dirname, 'index.html'));
+  // });
+
+  
     app.get("/user/admin/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
 
@@ -121,7 +186,9 @@ async function run() {
 
     app.get("/users", async (req, res) => {
       console.log(req.headers);
-      const result = await userCollection.find().toArray();
+      const email = req.query.email;
+      const query = { email: email };
+      const result = await userCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -230,7 +297,7 @@ async function run() {
       res.send(result);
     });
 
-    // ! Applied jobs get operatio
+    // ! Applied jobs get operation
 
     app.get("/applied-jobs", async (req, res) => {
       const email = req.query.email;
@@ -242,6 +309,7 @@ async function run() {
       res.send(result);
     });
 
+    
     // ! Favorite jobs post operation
 
     app.post("/favorite-jobs", async (req, res) => {
@@ -267,6 +335,24 @@ async function run() {
       const result = await favoriteJobsCollection.find(query).toArray();
       res.send(result);
     });
+
+    // ! all employee applied jobs get operation accorading publisher
+
+    app.get("/manage-applications", async (req, res) => {
+      const email = req.query.email;
+      // const result = await applicationCollection.find(query).toArray();
+      const result = await applicationCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get("/live-chats/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await applicationCollection.findOne(query);
+      res.send(result);
+    });
+
+  } 
 
     // ! create nodemailer api for email sending to posting a job for job seeker
     app.post("/send-email", async (req, res) => {
@@ -303,6 +389,8 @@ app.get("/", (req, res) => {
   res.send("Server is running");
 });
 
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`Server is waiting at: ${port}`);
 });
+
+
