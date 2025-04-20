@@ -25,8 +25,6 @@ app.use(express.json());
 app.use(bodyParser.json());
 app.use(cookieParser());
 
-// let messagesCollection;
-
 // create nodemailer transporter
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -60,12 +58,6 @@ async function run() {
       .db("cakriBakriDB")
       .collection("favoriteJobs");
     const messagesCollection = client.db("cakriBakriDB").collection("messages");
-    
-
-
-    // await client.connect();
-    // const db = client.db("cakriBakriDB");
-    // messagesCollection = db.collection("messages");
 
        //! Socket.IO chat setup
 
@@ -130,14 +122,6 @@ async function run() {
         next();
       });
     };
-
-  // !scoket io
-
-  // app.get('/', (req, res) => {
-  //   res.sendFile(join(__dirname, 'index.html'));
-  // });
-
-  
     app.get("/user/admin/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
 
@@ -245,6 +229,7 @@ async function run() {
     });
 
     //get catagorised jobs for client side
+
     app.get("/jobs-category", async (req, res) => {
       const { category } = req.query;
       const query = { category }
@@ -286,6 +271,7 @@ async function run() {
     });
 
     // apply a job
+
     app.post("/apply-job", async (req, res) => {
       const application = req.body;
       const query = { email: application?.email, jobId: application?.jobId }
@@ -309,15 +295,10 @@ async function run() {
       res.send(result);
     });
 
-    
     // ! Favorite jobs post operation
 
     app.post("/favorite-jobs", async (req, res) => {
       const favoriteJobs = req.body;
-      // console.log(favoriteJobs)
-      // if (req.body?.jobId == ) {
-      //   return res.status(403).send({ message: "forbidden access" });
-      // }
       const query = { email: favoriteJobs?.email, jobId: favoriteJobs?.jobId }
       const alreadyApplied = await favoriteJobsCollection.findOne(query);
       if (alreadyApplied) {
@@ -335,7 +316,6 @@ async function run() {
       const result = await favoriteJobsCollection.find(query).toArray();
       res.send(result);
     });
-
     // ! all employee applied jobs get operation accorading publisher
 
     app.get("/manage-applications", async (req, res) => {
@@ -351,10 +331,8 @@ async function run() {
       const result = await applicationCollection.findOne(query);
       res.send(result);
     });
-
-  } 
-
     // ! create nodemailer api for email sending to posting a job for job seeker
+    
     app.post("/send-email", async (req, res) => {
       const totalSeeker = await userCollection
         .find({ role: "seeker" }, { projection: { email: 1, _id: 0 } })
