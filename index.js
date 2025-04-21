@@ -8,16 +8,19 @@ const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
-const { createServer } = require('node:http');
-const { join } = require('node:path');
-const { Server } = require('socket.io');
+const { createServer } = require("node:http");
+const { join } = require("node:path");
+const { Server } = require("socket.io");
 const server = createServer(app);
 const io = new Server(server);
 
-
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "https://cakri-bakri-24583.firebaseapp.com",
+      "https://cakri-bakri-24583.web.app",
+    ],
     credentials: true,
   })
 );
@@ -38,14 +41,13 @@ const transporter = nodemailer.createTransport({
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.lfjkv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const  client = new MongoClient(uri, {
+const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
   },
 });
-
 
 async function run() {
   try {
@@ -59,47 +61,50 @@ async function run() {
       .collection("favoriteJobs");
     const messagesCollection = client.db("cakriBakriDB").collection("messages");
 
-       //! Socket.IO chat setup
+    //! Socket.IO chat setup
 
-       io.on("connection", (socket) => {
-        console.log("New user connected");
-  
-        socket.on("sendMessages", async(data) => {
-          const message = {
-            text: data?.text,
-            applierEmail: data?.jobApplierEmail,
-            senderEmail: data?.messageSender,
-            sender: data?.sender,
-            createdAt: new Date(),
-          };
-          console.log(message);
-          await messagesCollection.insertOne(message);
-          
-            io.emit(`${message.applierEmail}`, message);
-          
-          // io.emit(`${message.sender}`, message);
-          // io.emit('receivedMessage',message)
-        });
-  
-        socket.on("disconnect", () => {
-          console.log("Client disconnected");
-        });
+    io.on("connection", (socket) => {
+      console.log("New user connected");
+
+      socket.on("sendMessages", async (data) => {
+        const message = {
+          text: data?.text,
+          applierEmail: data?.jobApplierEmail,
+          senderEmail: data?.messageSender,
+          sender: data?.sender,
+          createdAt: new Date(),
+        };
+        console.log(message);
+        await messagesCollection.insertOne(message);
+
+        io.emit(`${message.applierEmail}`, message);
+
+        // io.emit(`${message.sender}`, message);
+        // io.emit('receivedMessage',message)
       });
 
-  // messages get operation 
+      socket.on("disconnect", () => {
+        console.log("Client disconnected");
+      });
+    });
 
-      app.get("/messages", async (req, res) => {
-        try {
-          const {applierEmail} = req.query
-          const query= {
-            ...(applierEmail && { applierEmail})
-          }
-          const messages = await messagesCollection.find(query).sort({ createdAt: 1 }).toArray();
+    // messages get operation
+
+    app.get("/messages", async (req, res) => {
+      try {
+        const { applierEmail } = req.query;
+        const query = {
+          ...(applierEmail && { applierEmail }),
+        };
+        const messages = await messagesCollection
+          .find(query)
+          .sort({ createdAt: 1 })
+          .toArray();
         res.json(messages);
-        } catch (error) {
-          res.status(500).json({ error: "Failed to fetch messages" });
-        }
-      });
+      } catch (error) {
+        res.status(500).json({ error: "Failed to fetch messages" });
+      }
+    });
 
     // Auth related APIs
     app.post("/jwt", async (req, res) => {
@@ -201,7 +206,7 @@ async function run() {
       const { search, category } = req.query;
       let query = {};
       if (search) {
-        query.title = { $regex: new RegExp(search, 'i') };
+        query.title = { $regex: new RegExp(search, "i") };
       }
       if (category) {
         query.category = category;
@@ -232,14 +237,16 @@ async function run() {
 
     app.get("/jobs-category", async (req, res) => {
       const { category } = req.query;
-      const query = { category }
+      const query = { category };
 
       const result = await jobsCollection.find(query).toArray();
       if (result.length === 0) {
-        return res.send({ message: `No jobs find with "${category}" category.` })
+        return res.send({
+          message: `No jobs find with "${category}" category.`,
+        });
       }
       res.send(result);
-    })
+    });
 
     // get specific job
     app.get("/job-details/:id", async (req, res) => {
@@ -274,10 +281,10 @@ async function run() {
 
     app.post("/apply-job", async (req, res) => {
       const application = req.body;
-      const query = { email: application?.email, jobId: application?.jobId }
+      const query = { email: application?.email, jobId: application?.jobId };
       const alreadyApplied = await applicationCollection.findOne(query);
       if (alreadyApplied) {
-        return res.send({ message: "Already applied for the job." })
+        return res.send({ message: "Already applied for the job." });
       }
       const result = await applicationCollection.insertOne(application);
       res.send(result);
@@ -299,10 +306,12 @@ async function run() {
 
     app.post("/favorite-jobs", async (req, res) => {
       const favoriteJobs = req.body;
-      const query = { email: favoriteJobs?.email, jobId: favoriteJobs?.jobId }
+      const query = { email: favoriteJobs?.email, jobId: favoriteJobs?.jobId };
       const alreadyApplied = await favoriteJobsCollection.findOne(query);
       if (alreadyApplied) {
-        return res.send({ message: "Already added in the favourite job list." })
+        return res.send({
+          message: "Already added in the favourite job list.",
+        });
       }
       const result = await favoriteJobsCollection.insertOne(favoriteJobs);
       res.send(result);
@@ -332,7 +341,7 @@ async function run() {
       res.send(result);
     });
     // ! create nodemailer apis for email sending to posting a job for job seeker
-    
+
     app.post("/send-email", async (req, res) => {
       const totalSeeker = await userCollection
         .find({ role: "seeker" }, { projection: { email: 1, _id: 0 } })
@@ -370,5 +379,3 @@ app.get("/", (req, res) => {
 server.listen(port, () => {
   console.log(`Server is waiting at: ${port}`);
 });
-
-
