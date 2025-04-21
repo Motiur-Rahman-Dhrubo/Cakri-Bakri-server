@@ -331,7 +331,7 @@ async function run() {
       const result = await applicationCollection.findOne(query);
       res.send(result);
     });
-    // ! create nodemailer api for email sending to posting a job for job seeker
+    // ! create nodemailer apis for email sending to posting a job for job seeker
     
     app.post("/send-email", async (req, res) => {
       const totalSeeker = await userCollection
