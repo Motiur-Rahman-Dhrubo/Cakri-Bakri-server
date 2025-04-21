@@ -154,6 +154,13 @@ app.get('/post-job-publisher',async (req,res)=>{
   const result = await jobsCollection.find(query).toArray()
   res.send(result)
 })
+//get applicant 
+app.get('/applicant',async (req,res)=>{
+  const email = req.query.email;
+  const query = {publisheremail: email}
+  const result = await applicationCollection.find(query).toArray()
+  res.send(result)
+})
 
 
     //get catagorised jobs for client side
