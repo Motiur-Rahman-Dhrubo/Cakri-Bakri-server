@@ -8,13 +8,16 @@ require("dotenv").config();
 const port = process.env.PORT || 5000;
 
 app.use(
-  cors()
+  cors({
+    origin: 'http://localhost:5173', 
+    credentials: true              
+  })
 );
 app.use(express.json());
 app.use(cookieParser());
 
 // MongoDB Setup
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.lfjkv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.uu4gd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -142,6 +145,15 @@ async function run() {
       const result = await jobsCollection.insertOne(jobData);
       res.send(result);
     });
+
+    // get post job accroding to publisher
+app.get('/post-job-publisher',async (req,res)=>{
+  const email = req.query.email;
+  console.log(email)
+  const query={email:email}
+  const result = await jobsCollection.find(query).toArray()
+  res.send(result)
+})
 
 
     //get catagorised jobs for client side
