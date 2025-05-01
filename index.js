@@ -28,7 +28,7 @@ app.use(express.json());
 app.use(bodyParser.json());
 app.use(cookieParser());
 
-// create nodemailer transporter
+// create nodemailer transporter 
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
