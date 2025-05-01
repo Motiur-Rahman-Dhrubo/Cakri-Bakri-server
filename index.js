@@ -124,7 +124,7 @@ async function run() {
           return res.status(400).send({ message: " Unauthorized access" });
         }
         req.decoded = decoded;
-        next();
+        // next();
       });
     };
     app.get("/user/admin/:email", verifyToken, async (req, res) => {
@@ -151,7 +151,7 @@ async function run() {
       const user = await userCollection.findOne(query);
       let publisher = false;
       if (user) {
-        publisher = user?. === "publisher";
+        publisher = user?.role === "publisher";
       }
       console.log(publisher);
       res.send({ publisher });
