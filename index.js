@@ -29,7 +29,7 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 
 // create nodemailer transporter 
-const transporter = .createTransport({
+const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
     user: process.env.NODEMAILER_EMAIL,
