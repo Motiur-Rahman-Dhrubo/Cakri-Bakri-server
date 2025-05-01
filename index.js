@@ -151,7 +151,7 @@ async function run() {
       const user = await userCollection.findOne(query);
       let publisher = false;
       if (user) {
-        publisher = user?.role === "publisher";
+        publisher = user?. === "publisher";
       }
       console.log(publisher);
       res.send({ publisher });
