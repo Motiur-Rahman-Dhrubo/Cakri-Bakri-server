@@ -124,7 +124,7 @@ async function run() {
           return res.status(400).send({ message: " Unauthorized access" });
         }
         req.decoded = decoded;
-        // next();
+        next();
       });
     };
     app.get("/user/admin/:email", verifyToken, async (req, res) => {
