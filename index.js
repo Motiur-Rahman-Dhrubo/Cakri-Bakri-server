@@ -90,7 +90,7 @@ async function run() {
 
     // messages get operation
 
-    app.get("/messages" async (req, res) => {
+    app.get("/messages", async (req, res) => {
       try {
         const { applierEmail } = req.query;
         const query = {
