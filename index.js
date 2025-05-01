@@ -17,7 +17,7 @@ const io = new Server(server);
 app.use(
   cors({
     origin: [
-      
+      "http://localhost:5173",
       "https://cakri-bakri-24583.firebaseapp.com",
       "https://cakri-bakri-24583.web.app",
     ],
