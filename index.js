@@ -1,3 +1,4 @@
+
 const express = require("express");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
@@ -248,6 +249,13 @@ async function run() {
       res.send(result);
     });
 
+    // post a job in db
+    app.post('/add-job', async(req, res) =>{
+      const jobData = req.body;
+      const result = await jobsCollection.insertOne(jobData);
+      res.send(result);
+    })
+
     // get specific job
     app.get("/job-details/:id", async (req, res) => {
       const id = req.params.id;
@@ -276,6 +284,21 @@ async function run() {
       const result = await jobsCollection.deleteOne(query);
       res.send(result);
     });
+
+    app.delete("/applied-jobs/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await applicationCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.send(result);
+    });
+
+    app.delete("/favorite-jobs/:jobId", async (req, res) => {
+      const { jobId } = req.params;
+      const result = await favoriteJobsCollection.deleteMany({ jobId });
+      res.send(result);
+    });
+
 
     // apply a job
 
@@ -340,6 +363,7 @@ async function run() {
       const result = await applicationCollection.findOne(query);
       res.send(result);
     });
+
     // ! create nodemailer apis for email sending to posting a job for job seeker
 
     app.post("/send-email", async (req, res) => {
