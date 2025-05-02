@@ -285,6 +285,14 @@ async function run() {
       res.send(result);
     });
 
+    app.delete("/applied-jobs/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await applicationCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.send(result);
+    });
+
     // apply a job
 
     app.post("/apply-job", async (req, res) => {
@@ -348,6 +356,7 @@ async function run() {
       const result = await applicationCollection.findOne(query);
       res.send(result);
     });
+
     // ! create nodemailer apis for email sending to posting a job for job seeker
 
     app.post("/send-email", async (req, res) => {
