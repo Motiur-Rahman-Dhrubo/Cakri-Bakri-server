@@ -293,6 +293,13 @@ async function run() {
       res.send(result);
     });
 
+    app.delete("/favorite-jobs/:jobId", async (req, res) => {
+      const { jobId } = req.params;
+      const result = await favoriteJobsCollection.deleteMany({ jobId });
+      res.send(result);
+    });
+
+
     // apply a job
 
     app.post("/apply-job", async (req, res) => {
